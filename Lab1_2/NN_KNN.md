@@ -1,12 +1,421 @@
 # Nearest Neighbor and K-Nearest Neighbors Classification
 
-## Overview
+## Code Execution Walkthrough
 
-This code implements two fundamental **instance-based learning** algorithms for image classification:
-1. **Nearest Neighbor (NN)**: Classifies based on the single closest training example
-2. **K-Nearest Neighbors (KNN)**: Classifies based on majority vote of k closest training examples
+This document explains the code execution step-by-step, following the order in which the program runs.
 
-Both algorithms are evaluated on the **CIFAR-10** dataset, which contains 60,000 color images (32×32 pixels) across 10 classes.
+---
+
+## Step 1: Import Libraries and Setup
+
+```python
+import numpy as np
+import cv2
+import tensorflow as tf
+
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+```
+
+**What happens:**
+- **numpy**: Used for numerical operations and array manipulation
+- **cv2**: OpenCV library (imported but not actively used in this code)
+- **tensorflow**: Used to load the CIFAR-10 dataset
+- **ssl configuration**: Disables SSL certificate verification to allow dataset download if there are certificate issues
+
+---
+
+## Step 2: Define Class Labels Dictionary
+
+```python
+DICT_CLASSES = {
+    0: "airplane",
+    1: "automobile",
+    2: "bird",
+    3: "cat",
+    4: "deer",
+    5: "dog",
+    6: "frog",
+    7: "horse",
+    8: "ship",
+    9: "truck"
+}
+```
+
+**What happens:**
+- Creates a mapping between numeric class labels (0-9) and human-readable class names
+- CIFAR-10 has 10 classes of objects
+- This dictionary is used later to display class names instead of just numbers
+
+---
+
+## Step 3: Define `predictLabelNN` Function
+
+```python
+def predictLabelNN(x_train_flatten, y_train, img):
+    predictedLabel = -1
+    scoreMin = float('inf')
+    
+    for idx, imgT in enumerate(x_train_flatten):
+        difference = np.abs(img - imgT)
+        score = np.sum(difference)
+        
+        if score < scoreMin:
+            scoreMin = score
+            predictedLabel = y_train[idx][0]
+    
+    return predictedLabel
+```
+
+**What happens (when called later):**
+
+### 3a. Initialize variables
+- `predictedLabel = -1`: Will hold the predicted class label
+- `scoreMin = float('inf')`: Starts with infinity, will track the minimum distance found
+
+### 3b. Loop through all training images
+```python
+for idx, imgT in enumerate(x_train_flatten):
+```
+- Iterates through all 50,000 training images
+- `idx`: Current index
+- `imgT`: Current training image (flattened vector)
+
+### 3c. Compute distance
+```python
+difference = np.abs(img - imgT)
+score = np.sum(difference)
+```
+- **L1 distance (Manhattan distance)**: Sum of absolute differences between pixels
+- Example: If test pixel = 120 and train pixel = 100, difference = |120-100| = 20
+- Sum all 3072 pixel differences to get total distance
+
+### 3d. Track minimum distance
+```python
+if score < scoreMin:
+    scoreMin = score
+    predictedLabel = y_train[idx][0]
+```
+- If current training image is closer than all previous ones, update the minimum
+- Store the label of this closest image
+- **Result**: The function returns the label of the single most similar training image
+
+---
+
+## Step 4: Define `predictLabelKNN` Function
+
+```python
+def predictLabelKNN(x_train_flatten, y_train, img, k=10):
+    predictions = []
+    
+    for idx, imgT in enumerate(x_train_flatten):
+        difference = np.abs(img - imgT)
+        score = np.sum(difference)
+        predictions.append((score, y_train[idx][0]))
+    
+    predictions = sorted(predictions, key=lambda x: x[0])
+    top_k_predictions = predictions[0:k]
+    predLabels = [label for _, label in top_k_predictions]
+    predictedLabel = max(set(predLabels), key=predLabels.count)
+    
+    return predictedLabel
+```
+
+**What happens (when called later):**
+
+### 4a. Initialize list to store all distances
+```python
+predictions = []
+```
+- Will store tuples of (distance, label) for all training images
+
+### 4b. Compute distances to ALL training images
+```python
+for idx, imgT in enumerate(x_train_flatten):
+    difference = np.abs(img - imgT)
+    score = np.sum(difference)
+    predictions.append((score, y_train[idx][0]))
+```
+- Same distance calculation as NN
+- But instead of tracking only the minimum, store ALL distances with their labels
+- Example: `[(250.5, 3), (180.2, 7), (195.8, 3), ...]`
+
+### 4c. Sort by distance
+```python
+predictions = sorted(predictions, key=lambda x: x[0])
+```
+- Sort all 50,000 (distance, label) pairs by distance (ascending)
+- Smallest distances first
+- Example after sorting: `[(150.1, 5), (152.3, 5), (155.7, 2), ...]`
+
+### 4d. Select k nearest neighbors
+```python
+top_k_predictions = predictions[0:k]
+```
+- Keep only the first k entries (k=10 by default)
+- These are the 10 closest training images
+
+### 4e. Extract labels
+```python
+predLabels = [label for _, label in top_k_predictions]
+```
+- Extract just the labels from the k nearest neighbors
+- Example: `[5, 5, 2, 5, 7, 5, 2, 5, 5, 2]` (10 labels)
+
+### 4f. Majority vote
+```python
+predictedLabel = max(set(predLabels), key=predLabels.count)
+```
+- Count how many times each label appears
+- Return the most common label
+- In example above: label 5 appears 6 times → predict class 5
+- **Result**: More robust than NN because it considers multiple neighbors
+
+---
+
+## Step 5: Main Function - Load Dataset
+
+```python
+def main():
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+```
+
+**What happens:**
+- Downloads CIFAR-10 dataset (if not already cached)
+- **x_train**: 50,000 training images, shape (50000, 32, 32, 3)
+  - 50,000 images, 32×32 pixels, 3 color channels (RGB)
+- **y_train**: 50,000 training labels, shape (50000, 1)
+- **x_test**: 10,000 test images, shape (10000, 32, 32, 3)
+- **y_test**: 10,000 test labels, shape (10000, 1)
+
+---
+
+## Step 6: Display Dataset Information
+
+```python
+print(f"Training images:   {x_train.shape}")
+print(f"Training labels:   {y_train.shape}")
+print(f"Test images:       {x_test.shape}")
+print(f"Test labels:       {y_test.shape}")
+```
+
+**Output example:**
+```
+Training images:   (50000, 32, 32, 3)
+Training labels:   (50000, 1)
+Test images:       (10000, 32, 32, 3)
+Test labels:       (10000, 1)
+```
+
+---
+
+## Step 7: Display First 10 Test Labels
+
+```python
+for i in range(10):
+    label_index = y_test[i][0]
+    print(f"Image {i}: Label {label_index} ({DICT_CLASSES[label_index]})")
+```
+
+**What happens:**
+- Shows the first 10 test images' labels
+- Uses the dictionary to show both number and name
+
+**Output example:**
+```
+Image 0: Label 3 (cat)
+Image 1: Label 8 (ship)
+Image 2: Label 8 (ship)
+...
+```
+
+---
+
+## Step 8: Flatten Images (CRUCIAL PREPROCESSING)
+
+```python
+x_train_flatten = np.float64(x_train.reshape(x_train.shape[0], 32 * 32 * 3))
+x_test_flatten = np.float64(x_test.reshape(x_test.shape[0], 32 * 32 * 3))
+```
+
+**What happens:**
+
+### Original format:
+- Image: 32 × 32 × 3 = 3D tensor
+- Each pixel has R, G, B values (0-255)
+
+### After flattening:
+- Image: 3072-dimensional vector (32 × 32 × 3 = 3072)
+- All pixels in a single row
+
+**Visual example:**
+```
+Before: [[[R,G,B], [R,G,B], ...], [[R,G,B], ...], ...]  (32×32×3)
+After:  [R,G,B, R,G,B, R,G,B, ..., R,G,B]              (3072,)
+```
+
+**Why flatten?**
+- Makes distance calculation simpler
+- Can treat image as a point in 3072-dimensional space
+- Standard format for many ML algorithms
+
+**Data type conversion:**
+- Convert to `float64` for numerical precision in calculations
+
+**Result:**
+- `x_train_flatten`: (50000, 3072)
+- `x_test_flatten`: (10000, 3072)
+
+---
+
+## Step 9: Initialize Testing Variables
+
+```python
+numberOfCorrectPredictedImages = 0
+num_images_to_test = 200
+```
+
+**What happens:**
+- `numberOfCorrectPredictedImages`: Counter for correct predictions
+- `num_images_to_test`: Only test on first 200 images (instead of all 10,000) to save time
+
+**Why only 200?**
+- Testing all 10,000 images would take hours
+- Each test image requires comparing with 50,000 training images
+- 200 images gives a reasonable accuracy estimate
+
+---
+
+## Step 10: Classification Loop (Main Processing)
+
+```python
+for idx, img in enumerate(x_test_flatten[0:num_images_to_test]):
+```
+
+**What happens:**
+- Loops through the first 200 test images
+- `idx`: Current test image index (0 to 199)
+- `img`: Current flattened test image (3072-dimensional vector)
+
+### For each test image:
+
+#### 10a. Call prediction function
+```python
+predictedLabel = predictLabelNN(x_train_flatten, y_train, img)
+```
+- Calls `predictLabelNN` (could also use `predictLabelKNN`)
+- Function compares this test image with all 50,000 training images
+- Returns the predicted class label (0-9)
+
+#### 10b. Get ground truth
+```python
+ground_truth_label = y_test[idx][0]
+```
+- Gets the actual correct label from the test set
+- This is what we're trying to predict
+
+#### 10c. Check if prediction is correct
+```python
+if predictedLabel == ground_truth_label:
+    numberOfCorrectPredictedImages += 1
+```
+- If prediction matches ground truth, increment the counter
+- This tracks how many images we classified correctly
+
+#### 10d. Display result
+```python
+match_status = "✓" if predictedLabel == ground_truth_label else "✗"
+print(f"  {match_status} Predicted: {predictedLabel} ({DICT_CLASSES[predictedLabel]}) | "
+      f"True: {ground_truth_label} ({DICT_CLASSES[ground_truth_label]})")
+```
+
+**Output example:**
+```
+✓ Predicted: 3 (cat) | True: 3 (cat)
+✗ Predicted: 5 (dog) | True: 3 (cat)
+✓ Predicted: 8 (ship) | True: 8 (ship)
+```
+
+---
+
+## Step 11: Calculate and Display Accuracy
+
+```python
+accuracy = 100 * numberOfCorrectPredictedImages / num_images_to_test
+
+print(f"Correct predictions: {numberOfCorrectPredictedImages}/{num_images_to_test}")
+print(f"Accuracy: {accuracy:.2f}%")
+```
+
+**What happens:**
+- **Accuracy formula**: (Correct predictions / Total predictions) × 100%
+- Example: If 72 out of 200 were correct → 72/200 × 100 = 36%
+
+**Output example:**
+```
+Correct predictions: 72/200
+Accuracy: 36.00%
+```
+
+**Interpretation:**
+- Random guessing would be 10% (10 classes)
+- NN typically achieves 35-38% on CIFAR-10
+- KNN slightly better at 38-40%
+- Modern CNNs achieve >95%
+
+---
+
+## Complete Execution Flow Summary
+
+```
+1. Import libraries → Setup SSL
+2. Define class labels dictionary
+3. Define predictLabelNN function (not executed yet)
+4. Define predictLabelKNN function (not executed yet)
+5. Start main()
+6. Load CIFAR-10 dataset (50,000 train + 10,000 test images)
+7. Display dataset shapes
+8. Show first 10 test labels
+9. Flatten all images: 32×32×3 → 3072-dimensional vectors
+10. Initialize counters
+11. For each of 200 test images:
+    a. Compare with all 50,000 training images
+    b. Find nearest neighbor(s)
+    c. Predict label
+    d. Check if correct
+    e. Display result
+12. Calculate final accuracy
+13. Display results
+```
+
+---
+
+## Key Concepts in Execution Order
+
+### Distance Calculation (L1)
+For each pair of images:
+```
+Distance = |pixel₁ - pixel₁'| + |pixel₂ - pixel₂'| + ... + |pixel₃₀₇₂ - pixel₃₀₇₂'|
+```
+
+### NN Decision
+```
+Predicted class = Label of training image with minimum distance
+```
+
+### KNN Decision  
+```
+1. Find k closest training images
+2. Count votes for each class
+3. Predicted class = Most frequent class among k neighbors
+```
+
+### Time Complexity
+- For 1 test image: 50,000 × 3072 operations ≈ 153 million operations
+- For 200 test images: 30.7 billion operations
+- This is why the code takes several minutes to run!
+
+---
 
 ## The CIFAR-10 Dataset
 
