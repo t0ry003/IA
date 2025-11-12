@@ -15,7 +15,7 @@ DICT_CLASSES = {
     5: "dog",
     6: "frog",
     7: "horse",
-    8: "ship",
+    8: "ship",  
     9: "truck"
 }
 
