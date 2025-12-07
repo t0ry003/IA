@@ -9,6 +9,13 @@ import cv2
 
 
 def summarizeLearningCurvesPerformances(histories, accuracyScores):
+    """
+    Summarizes and plots the learning curves and performance metrics.
+
+    Args:
+        histories (list): List of training history objects.
+        accuracyScores (list): List of accuracy scores for each fold.
+    """
 
     for i in range(len(histories)):
         # plot loss
@@ -37,6 +44,18 @@ def summarizeLearningCurvesPerformances(histories, accuracyScores):
 
 
 def prepareData(trainX, trainY, testX, testY):
+    """
+    Prepares the dataset by reshaping, normalizing, and one-hot encoding labels.
+
+    Args:
+        trainX (numpy.ndarray): Training data images.
+        trainY (numpy.ndarray): Training data labels.
+        testX (numpy.ndarray): Test data images.
+        testY (numpy.ndarray): Test data labels.
+
+    Returns:
+        tuple: Prepared trainX, trainY, testX, testY.
+    """
 
     # TODO - Application 1 - Step 4a - reshape the data to be of size [samples][width][height][channels]
     trainX = trainX.reshape(
@@ -57,6 +76,16 @@ def prepareData(trainX, trainY, testX, testY):
 
 
 def defineModel(input_shape, num_classes):
+    """
+    Defines the CNN model architecture.
+
+    Args:
+        input_shape (tuple): Shape of the input images.
+        num_classes (int): Number of output classes.
+
+    Returns:
+        tf.keras.Model: The compiled CNN model.
+    """
 
     # TODO - Application 1 - Step 6a - Initialize the sequential model
     model = models.Sequential()
@@ -86,6 +115,15 @@ def defineModel(input_shape, num_classes):
 
 
 def defineTrainAndEvaluateClassic(trainX, trainY, testX, testY):
+    """
+    Trains and evaluates the model using a classic train/test split.
+
+    Args:
+        trainX (numpy.ndarray): Training data images.
+        trainY (numpy.ndarray): Training data labels.
+        testX (numpy.ndarray): Test data images.
+        testY (numpy.ndarray): Test data labels.
+    """
 
     # TODO - Application 1 - Step 6 - Call the defineModel function
     # Step  6:  Build  the  model  –  We  will  construct  our  model  in  a  function  denoted  def defineModel(input_shape, num_classes)
@@ -98,11 +136,23 @@ def defineTrainAndEvaluateClassic(trainX, trainY, testX, testY):
     loss, accuracy = model.evaluate(testX, testY)
     print(f"Test accuracy: {accuracy:.4f}")
 
-# return
+    # return
     return
 
 
 def defineTrainAndEvaluateKFolds(trainX, trainY, testX, testY):
+    """
+    Trains and evaluates the model using K-Fold Cross Validation.
+
+    Args:
+        trainX (numpy.ndarray): Training data images.
+        trainY (numpy.ndarray): Training data labels.
+        testX (numpy.ndarray): Test data images.
+        testY (numpy.ndarray): Test data labels.
+
+    Returns:
+        tuple: List of histories and list of accuracy scores.
+    """
 
     k_folds = 5
 
@@ -142,6 +192,9 @@ def defineTrainAndEvaluateKFolds(trainX, trainY, testX, testY):
 
 
 def main():
+    """
+    Main function to load data, prepare it, and run training/evaluation.
+    """
 
     # TODO - Application 1 - Step 2 - Load the Fashion MNIST dataset in Keras
     (trainX, trainY), (testX, testY) = fashion_mnist.load_data()

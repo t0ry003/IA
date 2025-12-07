@@ -1,12 +1,18 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
-#####################################################################################################################
-#####################################################################################################################
 
 
-#####################################################################################################################
-#####################################################################################################################
 def baseline_model(num_pixels, num_classes):
+    """
+    Creates a simple Multi-Layer Perceptron (MLP) model.
+
+    Args:
+        num_pixels (int): Number of input pixels (features).
+        num_classes (int): Number of output classes.
+
+    Returns:
+        tf.keras.Model: The compiled MLP model.
+    """
 
     # TODO - Application 1 - Step 6a - Initialize the sequential model
     model = models.Sequential()
@@ -23,13 +29,18 @@ def baseline_model(num_pixels, num_classes):
                   metrics=['accuracy'])
 
     return model
-#####################################################################################################################
-#####################################################################################################################
 
 
-#####################################################################################################################
-#####################################################################################################################
 def trainAndPredictMLP(x_train, y_train, x_test, y_test):
+    """
+    Trains and evaluates an MLP model on the given dataset.
+
+    Args:
+        x_train (numpy.ndarray): Training data images.
+        y_train (numpy.ndarray): Training data labels.
+        x_test (numpy.ndarray): Test data images.
+        y_test (numpy.ndarray): Test data labels.
+    """
 
     # TODO - Application 1 - Step 3 - Reshape the MNIST dataset - Transform the images to 1D vectors of floats (28x28 pixels  to  784 elements)
     num_pixels = x_train.shape[1] * x_train.shape[2]
@@ -56,13 +67,19 @@ def trainAndPredictMLP(x_train, y_train, x_test, y_test):
     print("Baseline Error: {:.2f}".format(100-scores[1]*100))
 
     return
-#####################################################################################################################
-#####################################################################################################################
 
 
-#####################################################################################################################
-#####################################################################################################################
 def CNN_model(input_shape, num_classes):
+    """
+    Creates a Convolutional Neural Network (CNN) model.
+
+    Args:
+        input_shape (tuple): Shape of the input images (height, width, channels).
+        num_classes (int): Number of output classes.
+
+    Returns:
+        tf.keras.Model: The compiled CNN model.
+    """
 
     # TODO - Application 2 - Step 5a - Initialize the sequential model
     model = models.Sequential()
@@ -91,13 +108,18 @@ def CNN_model(input_shape, num_classes):
                   optimizer='adam', metrics=['accuracy'])
 
     return model
-#####################################################################################################################
-#####################################################################################################################
 
 
-#####################################################################################################################
-#####################################################################################################################
 def trainAndPredictCNN(x_train, y_train, x_test, y_test):
+    """
+    Trains and evaluates a CNN model on the given dataset.
+
+    Args:
+        x_train (numpy.ndarray): Training data images.
+        y_train (numpy.ndarray): Training data labels.
+        x_test (numpy.ndarray): Test data images.
+        y_test (numpy.ndarray): Test data labels.
+    """
 
     # TODO - Application 2 - Step 2 - reshape the data to be of size [samples][width][height][channels]
     x_train = x_train.reshape(
@@ -126,13 +148,12 @@ def trainAndPredictCNN(x_train, y_train, x_test, y_test):
     print("CNN Error: {:.2f}".format(100-scores[1]*100))
 
     return
-#####################################################################################################################
-#####################################################################################################################
 
 
-#####################################################################################################################
-#####################################################################################################################
 def main():
+    """
+    Main function to load data and run the training/prediction processes.
+    """
 
     # TODO - Application 1 - Step 1 - Load the MNIST dataset in Tensorflow
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
@@ -141,13 +162,7 @@ def main():
     # TODO - Application 2 - Step 1 - Train and predict on a CNN - Call the trainAndPredictCNN function
     trainAndPredictCNN(x_train, y_train, x_test, y_test)
     return
-#####################################################################################################################
-#####################################################################################################################
 
 
-#####################################################################################################################
-#####################################################################################################################
 if __name__ == '__main__':
     main()
-#####################################################################################################################
-#####################################################################################################################
