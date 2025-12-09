@@ -5,7 +5,6 @@ from matplotlib import pyplot
 import tensorflow as tf
 from tensorflow.keras import layers, models, optimizers
 from tensorflow.keras.datasets import fashion_mnist
-import cv2
 
 
 def summarizeLearningCurvesPerformances(histories, accuracyScores):
@@ -187,7 +186,7 @@ def defineTrainAndEvaluateKFolds(trainX, trainY, testX, testY):
         # TODO - Application 2 - Step 8 - Save the accuracy in the accuracyScores list
         accuracyScores.append(accuracy)
 
-# return histories and scores
+    # return histories and scores
     return histories, accuracyScores
 
 
